@@ -107,7 +107,7 @@ Future<void> cadastrarProduto(String? nome, double? preco, String? descricao,
 }
 
 Future<List<Produto>> selecionarProdutosGamer() async {
-  var retorno = await http.get(Uri.parse(' http://localhost:8000/api/produtos?categoria=gamer'));
+  var retorno = await http.get(Uri.parse('http://localhost:8000/api/produtos?categoria=gamer'));
   var dados = jsonDecode(retorno.body);
   List<Produto> produtos = [];
   for (var obj in dados) {
@@ -125,7 +125,7 @@ Future<List<Produto>> selecionarProdutosGamer() async {
 
 Future<List<Produto>> selecionarProdutosHardware() async {
   var retorno =
-      await http.get(Uri.parse(' http://localhost:8000/api/produtos?categoria=hardware'));
+      await http.get(Uri.parse('http://localhost:8000/api/produtos?categoria=hardware'));
   var dados = jsonDecode(retorno.body);
   List<Produto> produtos = [];
   for (var obj in dados) {
@@ -142,7 +142,7 @@ Future<List<Produto>> selecionarProdutosHardware() async {
 }
 
 Future<List<Produto>> selecionarProdutosRede() async {
-  var retorno = await http.get(Uri.parse(' http://localhost:8000/api/produtos?categoria=rede'));
+  var retorno = await http.get(Uri.parse('http://localhost:8000/api/produtos?categoria=rede'));
   var dados = jsonDecode(retorno.body);
   List<Produto> produtos = [];
   for (var obj in dados) {
