@@ -299,7 +299,7 @@ class ConteudoPagina extends State {
                   ],
                 ),
               ),
-              const SizedBox(height: 80),
+              const SizedBox(height: 10),
               Expanded(
                 child: DefaultTabController(
                   length: 3,
