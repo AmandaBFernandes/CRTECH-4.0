@@ -41,48 +41,73 @@ class PaginaCadastroProdutos extends StatefulWidget {
   }
 }
 
-Future<void> cadastrarProdutoGamer(String nome, double preco, String imagem,
-    String descricao, String categoria, int quantidade) async {
-  await http.post(Uri.parse('http://localhost:8000/api/produtos'),
-      headers: <String, String>{'Content-type': 'application/json'},
-      body: jsonEncode(<String, dynamic>{
-        'nome': nome,
-        'preco': preco,
-        'imagem': imagem,
-        'descricao': descricao,
-        'categoria': categoria,
-        'quantidade': quantidade
-      }));
-}
+Future<void> cadastrarProduto(String? nome, double? preco, String? descricao,
+    String? imagem, String? categoria, int? quantidade, context) async {
+  if (nome == null ||
+      descricao == null ||
+      preco == null ||
+      quantidade == null ||
+      categoria == null ||
+      imagem == null) {
+    const snackBar = SnackBar(
+      content: Text(
+          'Por favor, preencha todas informações para cadastrar o produto.',
+          style: TextStyle(color: Color.fromRGBO(40, 40, 40, 1))),
+      duration: Duration(seconds: 4),
+      backgroundColor: Color.fromRGBO(233, 213, 2, 1),
+    );
 
-Future<void> cadastrarProdutoHardware(String nome, String descricao,
-    double preco, int quantidade, String imagem) async {
-  await http.post(Uri.parse('http://localhost:3000/listaDeHardware'),
-      headers: <String, String>{'Content-type': 'application/json'},
-      body: jsonEncode(<String, dynamic>{
-        'nome': nome,
-        'descricao': descricao,
-        'preco': preco,
-        'quantidade': quantidade,
-        'imagem': imagem
-      }));
-}
-
-Future<void> cadastrarProdutoRede(String nome, String descricao, double preco,
-    int quantidade, String imagem) async {
-  await http.post(Uri.parse('http://localhost:3000/listaDeRede'),
-      headers: <String, String>{'Content-type': 'application/json'},
-      body: jsonEncode(<String, dynamic>{
-        'nome': nome,
-        'descricao': descricao,
-        'preco': preco,
-        'quantidade': quantidade,
-        'imagem': imagem
-      }));
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  } else if (nome.isEmpty ||
+      descricao.isEmpty ||
+      categoria.isEmpty ||
+      preco.isNaN ||
+      quantidade.isNaN ||
+      imagem.isEmpty) {
+    const snackBar = SnackBar(
+      content: Text(
+          'Por favor, preencha todas informações para cadastrar o produto.',
+          style: TextStyle(color: Color.fromRGBO(40, 40, 40, 1))),
+      duration: Duration(seconds: 4),
+      backgroundColor: Color.fromRGBO(233, 213, 2, 1),
+    );
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
+  } else {
+    await http
+        .post(Uri.parse('http://localhost:8000/api/produtos'),
+            headers: <String, String>{'Content-type': 'application/json'},
+            body: jsonEncode(<String, dynamic>{
+              'nome': nome,
+              'preco': preco,
+              'descricao': descricao,
+              'imagem': imagem,
+              'categoria': categoria,
+              'quantidade': quantidade
+            }))
+        .then((value) => {
+              if (value.statusCode == 201)
+                {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+                    content: Text('Item cadastrado com sucesso.'),
+                    duration: Duration(seconds: 4),
+                    backgroundColor: Colors.green,
+                  ))
+                }
+              else
+                {throw Error}
+            })
+        .catchError((error) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+        content: Text('Ocorreu um erro ao registrar o produto.'),
+        duration: Duration(seconds: 4),
+        backgroundColor: Colors.red,
+      ));
+    });
+  }
 }
 
 Future<List<Produto>> selecionarProdutosGamer() async {
-  var retorno = await http.get(Uri.parse('http://localhost:3000/listaGamer'));
+  var retorno = await http.get(Uri.parse(' http://localhost:8000/api/produtos?categoria=gamer'));
   var dados = jsonDecode(retorno.body);
   List<Produto> produtos = [];
   for (var obj in dados) {
@@ -100,7 +125,7 @@ Future<List<Produto>> selecionarProdutosGamer() async {
 
 Future<List<Produto>> selecionarProdutosHardware() async {
   var retorno =
-      await http.get(Uri.parse('http://localhost:3000/listaDeHardware'));
+      await http.get(Uri.parse(' http://localhost:8000/api/produtos?categoria=hardware'));
   var dados = jsonDecode(retorno.body);
   List<Produto> produtos = [];
   for (var obj in dados) {
@@ -117,7 +142,7 @@ Future<List<Produto>> selecionarProdutosHardware() async {
 }
 
 Future<List<Produto>> selecionarProdutosRede() async {
-  var retorno = await http.get(Uri.parse('http://localhost:3000/listaDeRede'));
+  var retorno = await http.get(Uri.parse(' http://localhost:8000/api/produtos?categoria=rede'));
   var dados = jsonDecode(retorno.body);
   List<Produto> produtos = [];
   for (var obj in dados) {
@@ -133,13 +158,48 @@ Future<List<Produto>> selecionarProdutosRede() async {
   return produtos;
 }
 
+Future<void> apagarProduto(int id) async {
+  await http.delete(
+    Uri.parse('http://localhost:8000/api/produtos/$id'),
+    headers: <String, String>{'Content-type': 'application/json'},
+  );
+}
+
+Future<void> atualizarProduto(int id, String novoNome, double novoPreco,
+    String novaDescricao, String novaImagem, int novaQuantidade) async {
+  final String apiUrl =
+      'http://localhost:8000/api/produtos/$id'; // URL do seu endpoint
+
+  final response = await http.put(
+    Uri.parse(apiUrl),
+    headers: <String, String>{
+      'Content-Type': 'application/json; charset=UTF-8',
+    },
+    body: jsonEncode(<String, dynamic>{
+      'nome': novoNome,
+      'preco': novoPreco,
+      'descricao': novaDescricao,
+      'imagem': novaImagem,
+      'quantidade': novaQuantidade,
+    }),
+  );
+
+  if (response.statusCode == 200) {
+    // Produto atualizado com sucesso
+    print('Produto atualizado com sucesso.');
+  } else {
+    // Falha ao atualizar o produto
+    throw Exception('Falha ao atualizar o produto.');
+  }
+}
+
 class ConteudoPagina extends State {
   String? nome;
   String? descricao;
   double? preco;
-  String? categoria;
   int? quantidade;
   String? imagem;
+  String? categoria;
 
   @override
   void initState() {
@@ -154,7 +214,7 @@ class ConteudoPagina extends State {
         title: const Text("Cadastro de Produtos"),
       ),
       body: Padding(
-        padding: EdgeInsets.all(40.0), // Defina o espaço desejado aqui
+        padding: EdgeInsets.all(40.0),
         child: Center(
           child: Column(
             children: [
@@ -174,21 +234,21 @@ class ConteudoPagina extends State {
                     ),
                     TextField(
                       decoration: const InputDecoration(
-                        hintText: 'Digite uma descrição',
+                        hintText: 'Digite um categoria',
                       ),
                       onChanged: (valor) {
                         setState(() {
-                          descricao = valor;
+                          categoria = valor;
                         });
                       },
                     ),
                     TextField(
                       decoration: const InputDecoration(
-                        hintText: 'Digite uma categoria',
+                        hintText: 'Digite uma descrição',
                       ),
                       onChanged: (valor) {
                         setState(() {
-                          categoria = valor;
+                          descricao = valor;
                         });
                       },
                     ),
@@ -226,43 +286,15 @@ class ConteudoPagina extends State {
                     ElevatedButton(
                       onPressed: () {
                         setState(() {
-                          cadastrarProdutoGamer(nome!, preco!, imagem!,
-                              descricao!, categoria!, quantidade!);
+                          cadastrarProduto(nome, preco, descricao, imagem,
+                              categoria, quantidade, context);
                         });
                       },
                       style: ElevatedButton.styleFrom(
                           foregroundColor: Colors.white,
                           backgroundColor: Colors.pink,
                           fixedSize: const Size(210, 20)),
-                      child: const Text("Cadastrar Produto Gamer"),
-                    ),
-                    const SizedBox(height: 5),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          cadastrarProdutoRede(
-                              nome!, descricao!, preco!, quantidade!, imagem!);
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: Colors.pink,
-                          fixedSize: const Size(210, 20)),
-                      child: const Text("Cadastrar Produto Rede"),
-                    ),
-                    const SizedBox(height: 5),
-                    ElevatedButton(
-                      onPressed: () {
-                        setState(() {
-                          cadastrarProdutoHardware(
-                              nome!, descricao!, preco!, quantidade!, imagem!);
-                        });
-                      },
-                      style: ElevatedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          backgroundColor: Colors.pink,
-                          fixedSize: const Size(210, 20)),
-                      child: const Text("Cadastrar Produto Hardware"),
+                      child: const Text("Cadastrar Produto"),
                     ),
                   ],
                 ),
@@ -274,11 +306,11 @@ class ConteudoPagina extends State {
                   child: Scaffold(
                     appBar: const TabBar(
                       indicator: BoxDecoration(
-                        color: Colors.pink, // Cor do sublinhado
+                        color: Colors.pink,
                         border: Border(
                           bottom: BorderSide(
-                            color: Colors.pink, // Cor do sublinhado
-                            width: 2.0, // Largura do sublinhado
+                            color: Colors.pink,
+                            width: 2.0,
                           ),
                         ),
                       ),
@@ -287,15 +319,17 @@ class ConteudoPagina extends State {
                         Tab(text: 'Rede'),
                         Tab(text: 'Hardware'),
                       ],
-                      labelColor: Colors.white, // Cor do texto das guias ativas
-                      unselectedLabelColor:
-                          Colors.pink, // Cor do texto das guias inativas
+                      labelColor: Colors.white,
+                      unselectedLabelColor: Colors.pink,
                     ),
                     body: TabBarView(
                       children: [
-                        _buildProdutoList(selecionarProdutosGamer),
-                        _buildProdutoList(selecionarProdutosRede),
-                        _buildProdutoList(selecionarProdutosHardware),
+                        _buildProdutoList(
+                            selecionarProdutosGamer, apagarProduto),
+                        _buildProdutoList(
+                            selecionarProdutosRede, apagarProduto),
+                        _buildProdutoList(
+                            selecionarProdutosHardware, apagarProduto),
                       ],
                     ),
                   ),
@@ -308,7 +342,8 @@ class ConteudoPagina extends State {
     );
   }
 
-  Widget _buildProdutoList(Future<List<Produto>> Function() fetchProdutos) {
+  Widget _buildProdutoList(Future<List<Produto>> Function() fetchProdutos,
+      Future<void> Function(int id) deletarProdutos) {
     return FutureBuilder(
       future: fetchProdutos(),
       builder: (context, snapshot) {
@@ -322,9 +357,6 @@ class ConteudoPagina extends State {
           itemCount: snapshot.data?.length,
           itemBuilder: (context, index) {
             return GestureDetector(
-              onTap: () {
-                _mostrarDetalhesProduto(context, snapshot.data![index]);
-              },
               child: Card(
                 elevation: 3,
                 margin: const EdgeInsets.all(10),
@@ -337,7 +369,37 @@ class ConteudoPagina extends State {
                     "ID: ${snapshot.data?[index].id}",
                     style: TextStyle(fontSize: 14),
                   ),
-                  trailing: Icon(Icons.arrow_forward),
+                  trailing: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.arrow_forward),
+                        onPressed: () {
+                          setState(() {
+                            _mostrarDetalhesProduto(
+                                context, snapshot.data![index]);
+                          });
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.delete),
+                        onPressed: () {
+                          setState(() {
+                            int? id = snapshot.data![index].id;
+                            deletarProdutos(id!);
+                          });
+                        },
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.edit),
+                        onPressed: () {
+                          setState(() {
+                            _atualizarProduto(context, snapshot.data![index]);
+                          });
+                        },
+                      ),
+                    ],
+                  ),
                 ),
               ),
             );
@@ -359,7 +421,7 @@ class ConteudoPagina extends State {
               Text("ID: ${produto.id}"),
               Text("Nome: ${produto.nome}"),
               Text("Descrição: ${produto.descricao}"),
-              Text("Preço: ${produto.preco?.toStringAsFixed(2)}"),
+              Text("Preço: ${produto.preco?.toStringAsFixed(2) ?? 'N/A'}"),
               Text("Quantidade: ${produto.quantidade}"),
             ],
           ),
@@ -375,4 +437,82 @@ class ConteudoPagina extends State {
       },
     );
   }
+}
+
+Future<void> _atualizarProduto(BuildContext context, Produto produto) async {
+  String? novoNome;
+  double? novoPreco;
+  String? novaDescricao;
+  String? novaImagem;
+  int? novaQuantidade;
+
+  await showDialog(
+    context: context,
+    builder: (context) {
+      return AlertDialog(
+        title: const Text("Atualizar Produto"),
+        content: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text("ID: ${produto.id}"),
+            TextField(
+              decoration: const InputDecoration(
+                hintText: 'Digite um novo Nome',
+              ),
+              onChanged: (valor) {
+                novoNome = valor;
+              },
+            ),
+            TextField(
+              decoration: const InputDecoration(
+                hintText: 'Digite um novo Preço',
+              ),
+              onChanged: (valor) {
+                novoPreco = double.tryParse(valor);
+              },
+            ),
+            TextField(
+              decoration: const InputDecoration(
+                hintText: 'Digite uma nova Descrição',
+              ),
+              onChanged: (valor) {
+                novaDescricao = valor;
+              },
+            ),
+            TextField(
+              decoration: const InputDecoration(
+                hintText: 'Digite uma nova Imagem',
+              ),
+              onChanged: (valor) {
+                novaImagem = valor;
+              },
+            ),
+            TextField(
+              decoration: const InputDecoration(
+                hintText: 'Digite uma nova Quantidade',
+              ),
+              onChanged: (valor) {
+                novaQuantidade = int.tryParse(valor);
+              },
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              if (novoNome != null &&
+                  novoPreco != null &&
+                  novaDescricao != null) {
+                // Chama o método de atualização aqui
+                atualizarProduto(produto.id!, novoNome!, novoPreco!,
+                    novaDescricao!, novaImagem!, novaQuantidade!);
+                Navigator.of(context).pop();
+              }
+            },
+            child: const Text("Atualizar"),
+          ),
+        ],
+      );
+    },
+  );
 }
